@@ -1,0 +1,60 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="teknofest_parkur">
+
+    <include><uri>model://sun</uri></include>
+    <include><uri>model://ground_plane</uri></include>
+
+    <!-- Dış çevre duvarı -->
+    <model name="dis_kuzey"><static>true</static><pose>0 15 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>30 0.3 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>30 0.3 1</size></box></geometry><material><ambient>0.3 0.3 0.3 1</ambient></material></visual></link></model>
+
+    <model name="dis_guney"><static>true</static><pose>0 -15 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>30 0.3 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>30 0.3 1</size></box></geometry><material><ambient>0.3 0.3 0.3 1</ambient></material></visual></link></model>
+
+    <model name="dis_dogu"><static>true</static><pose>15 0 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>0.3 30 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>0.3 30 1</size></box></geometry><material><ambient>0.3 0.3 0.3 1</ambient></material></visual></link></model>
+
+    <model name="dis_bati"><static>true</static><pose>-15 0 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>0.3 30 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>0.3 30 1</size></box></geometry><material><ambient>0.3 0.3 0.3 1</ambient></material></visual></link></model>
+
+    <!-- İç ada duvarları (döngü oluşturmak için) -->
+    <model name="ic_kuzey"><static>true</static><pose>0 7 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>16 0.3 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>16 0.3 1</size></box></geometry><material><ambient>0.5 0.5 0.5 1</ambient></material></visual></link></model>
+
+    <model name="ic_guney"><static>true</static><pose>0 -7 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>16 0.3 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>16 0.3 1</size></box></geometry><material><ambient>0.5 0.5 0.5 1</ambient></material></visual></link></model>
+
+    <model name="ic_dogu"><static>true</static><pose>8 0 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>0.3 14 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>0.3 14 1</size></box></geometry><material><ambient>0.5 0.5 0.5 1</ambient></material></visual></link></model>
+
+    <model name="ic_bati"><static>true</static><pose>-8 0 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>0.3 14 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>0.3 14 1</size></box></geometry><material><ambient>0.5 0.5 0.5 1</ambient></material></visual></link></model>
+
+    <!-- Statik engeller — yol üzerinde -->
+    <model name="engel_1"><static>true</static><pose>0 11 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>1.5 1.5 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>1.5 1.5 1</size></box></geometry><material><ambient>1 0 0 1</ambient></material></visual></link></model>
+
+    <model name="engel_2"><static>true</static><pose>0 -11 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>1.5 1.5 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>1.5 1.5 1</size></box></geometry><material><ambient>1 0 0 1</ambient></material></visual></link></model>
+
+    <model name="engel_3"><static>true</static><pose>11 0 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>1.5 1.5 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>1.5 1.5 1</size></box></geometry><material><ambient>1 0 0 1</ambient></material></visual></link></model>
+
+    <model name="engel_4"><static>true</static><pose>-11 0 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>1.5 1.5 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>1.5 1.5 1</size></box></geometry><material><ambient>1 0 0 1</ambient></material></visual></link></model>
+
+  </world>
+</sdf>

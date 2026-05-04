@@ -1,0 +1,78 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="teknofest_v2">
+
+    <include><uri>model://sun</uri></include>
+    <include><uri>model://ground_plane</uri></include>
+
+    <!-- Dış duvarlar 40x40m -->
+    <model name="wall_north"><static>true</static><pose>0 20 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>40 0.3 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>40 0.3 1</size></box></geometry><material><ambient>0.3 0.3 0.3 1</ambient></material></visual></link></model>
+
+    <model name="wall_south"><static>true</static><pose>0 -20 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>40 0.3 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>40 0.3 1</size></box></geometry><material><ambient>0.3 0.3 0.3 1</ambient></material></visual></link></model>
+
+    <model name="wall_east"><static>true</static><pose>20 0 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>0.3 40 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>0.3 40 1</size></box></geometry><material><ambient>0.3 0.3 0.3 1</ambient></material></visual></link></model>
+
+    <model name="wall_west"><static>true</static><pose>-20 0 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>0.3 40 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>0.3 40 1</size></box></geometry><material><ambient>0.3 0.3 0.3 1</ambient></material></visual></link></model>
+
+    <!-- İç duvarlar — L şeklinde koridor -->
+    <model name="ic_duvar_1"><static>true</static><pose>-5 5 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>10 0.3 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>10 0.3 1</size></box></geometry><material><ambient>0.5 0.5 0.5 1</ambient></material></visual></link></model>
+
+    <model name="ic_duvar_2"><static>true</static><pose>5 -5 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>0.3 10 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>0.3 10 1</size></box></geometry><material><ambient>0.5 0.5 0.5 1</ambient></material></visual></link></model>
+
+    <!-- Statik engeller — kırmızı -->
+    <model name="engel_1"><static>true</static><pose>-15 10 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>2 2 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>2 2 1</size></box></geometry><material><ambient>1 0 0 1</ambient></material></visual></link></model>
+
+    <model name="engel_2"><static>true</static><pose>10 15 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>2 2 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>2 2 1</size></box></geometry><material><ambient>1 0 0 1</ambient></material></visual></link></model>
+
+    <model name="engel_3"><static>true</static><pose>15 -10 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>2 2 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>2 2 1</size></box></geometry><material><ambient>1 0 0 1</ambient></material></visual></link></model>
+
+    <model name="engel_4"><static>true</static><pose>-10 -15 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>2 2 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>2 2 1</size></box></geometry><material><ambient>1 0 0 1</ambient></material></visual></link></model>
+
+    <model name="engel_5"><static>true</static><pose>0 -10 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>2 2 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>2 2 1</size></box></geometry><material><ambient>1 0 0 1</ambient></material></visual></link></model>
+
+    <model name="engel_6"><static>true</static><pose>-10 5 0.5 0 0 0</pose>
+      <link name="link"><collision name="c"><geometry><box><size>2 2 1</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>2 2 1</size></box></geometry><material><ambient>1 0 0 1</ambient></material></visual></link></model>
+
+    <!-- Dinamik engel — ileri geri hareket eder -->
+    <model name="dinamik_engel">
+      <pose>0 10 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>1.5 1.5 1</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>1.5 1.5 1</size></box></geometry>
+          <material><ambient>1 0.5 0 1</ambient></material>
+        </visual>
+        <inertial><mass>10</mass></inertial>
+      </link>
+      <plugin name="move_plugin" filename="libgazebo_ros_planar_move.so">
+        <ros><namespace>/dynamic_obstacle</namespace></ros>
+        <publish_odom>true</publish_odom>
+        <publish_odom_tf>false</publish_odom_tf>
+      </plugin>
+    </model>
+
+  </world>
+</sdf>

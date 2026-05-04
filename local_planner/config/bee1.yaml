@@ -1,0 +1,8 @@
+local_planner_node:
+  ros__parameters:
+    max_steering_angle: 32.5
+    safe_stopping_distance: 2.0
+    lookahead_distance: 3.5
+    desired_speed: 5.0
+    wheelbase: 1.86
+    step_size: 1.0
