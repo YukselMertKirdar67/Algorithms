@@ -54,7 +54,6 @@ private:
   void mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
   {
     bool first_map = (map_ == nullptr);
-    if (map_) return;
     map_ = msg;
 
     if (first_map) {
