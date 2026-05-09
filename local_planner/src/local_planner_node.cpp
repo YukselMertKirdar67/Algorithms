@@ -58,7 +58,6 @@ private:
   void mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
   {
     if (map_) return;
-    if (map_) return;
     map_ = msg;
     RCLCPP_INFO(this->get_logger(), "Harita alindi: %d x %d",
       msg->info.width, msg->info.height);
