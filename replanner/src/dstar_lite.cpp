@@ -197,7 +197,6 @@ void DStarLite::updateGrid(const std::vector<int8_t> & new_grid)
 
   computeShortestPath();
 }
-
 std::vector<std::pair<int,int>> DStarLite::getPath(std::pair<int,int> current)
 {
   std::vector<std::pair<int,int>> path;
@@ -228,5 +227,49 @@ std::vector<std::pair<int,int>> DStarLite::getPath(std::pair<int,int> current)
     path.push_back(current);
   }
 
-  return path;
+  return smoothPath(path);
+}
+
+std::vector<std::pair<int,int>> DStarLite::smoothPath(
+  const std::vector<std::pair<int,int>> & path)
+{
+  if (path.size() < 3) return path;
+
+  std::vector<std::pair<int,int>> smoothed;
+  smoothed.push_back(path[0]);
+
+  size_t current = 0;
+
+  while (current < path.size() - 1) {
+    size_t farthest = current + 1;
+
+    for (size_t next = current + 2; next < path.size() && next <= current + 5; next++) {
+      int x0 = path[current].first;
+      int y0 = path[current].second;
+      int x1 = path[next].first;
+      int y1 = path[next].second;
+
+      bool clear = true;
+      int ddx = std::abs(x1 - x0);
+      int ddy = std::abs(y1 - y0);
+      int sx = (x0 < x1) ? 1 : -1;
+      int sy = (y0 < y1) ? 1 : -1;
+      int err = ddx - ddy;
+
+      int cx = x0, cy = y0;
+      while (cx != x1 || cy != y1) {
+        if (isObstacle(cx, cy)) { clear = false; break; }
+        int e2 = 2 * err;
+        if (e2 > -ddy) { err -= ddy; cx += sx; }
+        if (e2 <  ddx) { err += ddx; cy += sy; }
+      }
+
+      if (clear) farthest = next;
+    }
+
+    smoothed.push_back(path[farthest]);
+    current = farthest;
+  }
+
+  return smoothed;
 }

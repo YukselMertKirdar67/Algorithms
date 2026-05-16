@@ -54,7 +54,6 @@ private:
   void mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
   {
     bool first_map = (map_ == nullptr);
-    if (map_) return;
     map_ = msg;
 
     if (first_map) {
@@ -62,7 +61,6 @@ private:
         msg->info.width, msg->info.height);
       tryInitialize();
     } else {
-      // Harita değiştiğinde D* Lite replanning yap
       RCLCPP_INFO(this->get_logger(), "Harita guncellendi — D* Lite replanning!");
       if (initialized_) {
         dstar_->updateGrid(msg->data);
@@ -81,7 +79,6 @@ private:
 
   void poseCallback(const askar_interfaces::msg::VehicleLocation::SharedPtr msg)
   {
-    // Sadece konumu sakla
     current_location_ = msg;
     if (!initialized_) {
       tryInitialize();
@@ -105,7 +102,7 @@ private:
     double cx = current_location_->x;
     double cy = current_location_->y;
     double sx, sy;
-    bool is_gps = current_location_->is_gps_reliable && (cy > 35.0 && cy < 43.0 && cx > 25.0 && cx < 45.0);
+    bool is_gps = (cy > 35.0 && cy < 43.0 && cx > 25.0 && cx < 45.0);
     if (is_gps) {
       auto [mx, my] = gpsToMeters(cy, cx, ref_lat, ref_lon);
       sx = mx; sy = my;
@@ -151,7 +148,7 @@ private:
     double cx = current_location_->x;
     double cy = current_location_->y;
     double sx, sy;
-    bool is_gps = current_location_->is_gps_reliable && (cy > 35.0 && cy < 43.0 && cx > 25.0 && cx < 45.0);
+    bool is_gps = (cy > 35.0 && cy < 43.0 && cx > 25.0 && cx < 45.0);
     if (is_gps) {
       auto [mx, my] = gpsToMeters(cy, cx, ref_lat, ref_lon);
       sx = mx; sy = my;

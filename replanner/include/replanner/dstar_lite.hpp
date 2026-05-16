@@ -7,6 +7,7 @@
 #include <cmath>
 #include <algorithm>
 #include <limits>
+#include <unordered_set>
 
 struct DNode {
   int x, y;
@@ -40,6 +41,9 @@ public:
 
   // Grid koordinatı → dünya koordinatı
   std::pair<double,double> gridToWorld(int gx, int gy);
+  
+  std::vector<std::pair<int,int>> smoothPath(
+  const std::vector<std::pair<int,int>> & path);
 
 private:
   int width_;

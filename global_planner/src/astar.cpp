@@ -10,7 +10,6 @@ int AStar::toIndex(int x, int y)
 
 float AStar::heuristic(int x1, int y1, int x2, int y2)
 {
-  // Öklid mesafesi
   return std::sqrt(
     std::pow(static_cast<float>(x2 - x1), 2) +
     std::pow(static_cast<float>(y2 - y1), 2)
@@ -19,8 +18,6 @@ float AStar::heuristic(int x1, int y1, int x2, int y2)
 
 bool AStar::isValid(int x, int y, const std::vector<int8_t> & grid)
 {
-  // Araç boyutuna göre inflation radius
-  // Araç genişliği: 1.06m, çözünürlük: 0.5m → 2 hücre güvenlik mesafesi
   int inflation = static_cast<int>(0.3 / resolution_);
   if (inflation < 1) inflation = 1;
 
@@ -28,19 +25,57 @@ bool AStar::isValid(int x, int y, const std::vector<int8_t> & grid)
     for (int dy = -inflation; dy <= inflation; dy++) {
       int nx = x + dx;
       int ny = y + dy;
-
-      if (nx < 0 || nx >= width_ || ny < 0 || ny >= height_) {
-        return false;
-      }
-
+      if (nx < 0 || nx >= width_ || ny < 0 || ny >= height_) return false;
       int8_t cell = grid[toIndex(nx, ny)];
-      if (cell < 0 || cell >= 50) {
-        return false;
-      }
+      if (cell < 0 || cell >= 50) return false;
     }
   }
-
   return true;
+}
+
+std::vector<std::pair<int,int>> AStar::smoothPath(
+  const std::vector<std::pair<int,int>> & path,
+  const std::vector<int8_t> & grid)
+{
+  if (path.size() < 3) return path;
+
+  std::vector<std::pair<int,int>> smoothed;
+  smoothed.push_back(path[0]);
+
+  size_t current = 0;
+
+  while (current < path.size() - 1) {
+    size_t farthest = current + 1;
+
+    for (size_t next = current + 2; next < path.size(); next++) {
+      int x0 = path[current].first;
+      int y0 = path[current].second;
+      int x1 = path[next].first;
+      int y1 = path[next].second;
+
+      bool clear = true;
+      int ddx = std::abs(x1 - x0);
+      int ddy = std::abs(y1 - y0);
+      int sx = (x0 < x1) ? 1 : -1;
+      int sy = (y0 < y1) ? 1 : -1;
+      int err = ddx - ddy;
+
+      int cx = x0, cy = y0;
+      while (cx != x1 || cy != y1) {
+        if (!isValid(cx, cy, grid)) { clear = false; break; }
+        int e2 = 2 * err;
+        if (e2 > -ddy) { err -= ddy; cx += sx; }
+        if (e2 <  ddx) { err += ddx; cy += sy; }
+      }
+
+      if (clear) farthest = next;
+    }
+
+    smoothed.push_back(path[farthest]);
+    current = farthest;
+  }
+
+  return smoothed;
 }
 
 std::vector<std::pair<int,int>> AStar::plan(
@@ -48,16 +83,10 @@ std::vector<std::pair<int,int>> AStar::plan(
   std::pair<int,int> goal,
   const std::vector<int8_t> & grid)
 {
-  // Open list: en düşük f değeri önce çıkar
   std::priority_queue<Node, std::vector<Node>, std::greater<Node>> open_list;
-
-  // Tüm ziyaret edilen düğümler
   std::unordered_map<int, Node> all_nodes;
-
-  // Kapalı liste
   std::unordered_map<int, bool> closed_list;
 
-  // Başlangıç düğümü oluştur
   Node start_node;
   start_node.x = start.first;
   start_node.y = start.second;
@@ -70,30 +99,19 @@ std::vector<std::pair<int,int>> AStar::plan(
   open_list.push(start_node);
   all_nodes[toIndex(start.first, start.second)] = start_node;
 
-  // 8 yönlü hareket
-  // Düz: maliyet 1.0, çapraz: maliyet 1.414
   int dx[] = { 0,  0,  1, -1,  1,  1, -1, -1};
   int dy[] = { 1, -1,  0,  0,  1, -1,  1, -1};
   float move_cost[] = {1.0f, 1.0f, 1.0f, 1.0f, 1.414f, 1.414f, 1.414f, 1.414f};
 
   while (!open_list.empty()) {
-
-    // En düşük f değerli düğümü al
     Node current = open_list.top();
     open_list.pop();
 
     int curr_idx = toIndex(current.x, current.y);
-
-    // Zaten işlendiyse atla
-    if (closed_list.count(curr_idx) && closed_list[curr_idx]) {
-      continue;
-    }
+    if (closed_list.count(curr_idx) && closed_list[curr_idx]) continue;
     closed_list[curr_idx] = true;
 
-    // Hedefe ulaşıldı mı?
     if (current.x == goal.first && current.y == goal.second) {
-
-      // Geriye doğru iz sürerek rotayı oluştur
       std::vector<std::pair<int,int>> path;
       Node n = current;
 
@@ -103,34 +121,22 @@ std::vector<std::pair<int,int>> AStar::plan(
         n = all_nodes[parent_idx];
       }
 
-      // Başlangıç noktasını da ekle
       path.push_back({start.first, start.second});
-
-      // Rotayı baştan sona sırala
       std::reverse(path.begin(), path.end());
-      return path;
+      return smoothPath(path, grid);
     }
 
-    // 8 komşuyu genişlet
     for (int i = 0; i < 8; i++) {
       int nx = current.x + dx[i];
       int ny = current.y + dy[i];
 
-      // Geçerli değilse atla
-      if (!isValid(nx, ny, grid)) {
-        continue;
-      }
+      if (!isValid(nx, ny, grid)) continue;
 
       int n_idx = toIndex(nx, ny);
-
-      // Zaten kapalı listedeyse atla
-      if (closed_list.count(n_idx) && closed_list[n_idx]) {
-        continue;
-      }
+      if (closed_list.count(n_idx) && closed_list[n_idx]) continue;
 
       float new_g = current.g + move_cost[i];
 
-      // Bu düğüm hiç görülmedi veya daha iyi bir yol bulundu
       if (all_nodes.find(n_idx) == all_nodes.end() ||
           new_g < all_nodes[n_idx].g)
       {
@@ -149,6 +155,5 @@ std::vector<std::pair<int,int>> AStar::plan(
     }
   }
 
-  // Rota bulunamadı — boş liste döndür
   return {};
 }

@@ -1,3 +1,4 @@
+#include "rclcpp/rclcpp.hpp"
 #include "local_planner/hybrid_astar.hpp"
 #include <sstream>
 #include <iomanip>
@@ -93,16 +94,18 @@ std::vector<std::tuple<double,double,double>> HybridAStar::plan(
   double gx = std::get<0>(goal);
   double gy = std::get<1>(goal);
 
-  std::cout << "Plan basliyor:" << std::endl;
-  std::cout << "  Start: x=" << sx << " y=" << sy << " theta=" << st << std::endl;
-  std::cout << "  Goal:  x=" << gx << " y=" << gy << std::endl;
-  std::cout << "  Grid boyutu: " << grid.size() << std::endl;
-  std::cout << "  Width=" << width_ << " Height=" << height_ << std::endl;
-  std::cout << "  Resolution=" << resolution_ << std::endl;
+  RCLCPP_INFO(rclcpp::get_logger("hybrid_astar"),
+    "Plan basliyor: start=(%.2f,%.2f,%.2f) goal=(%.2f,%.2f)",
+    sx, sy, st, gx, gy);
 
-  // Başlangıç ve hedef geçerli mi?
-  std::cout << "Start gecerli mi: " << isValid(sx, sy, grid) << std::endl;
-  std::cout << "Goal gecerli mi: "  << isValid(gx, gy, grid) << std::endl;
+  if (!isValid(sx, sy, grid)) {
+    RCLCPP_WARN(rclcpp::get_logger("hybrid_astar"), "Baslangic noktasi gecersiz!");
+    return {};
+  }
+  if (!isValid(gx, gy, grid)) {
+    RCLCPP_WARN(rclcpp::get_logger("hybrid_astar"), "Hedef noktasi gecersiz!");
+    return {};
+  }
 
   std::priority_queue<HNode, std::vector<HNode>, std::greater<HNode>> open_list;
   std::unordered_map<std::string, HNode> all_nodes;
@@ -134,12 +137,6 @@ std::vector<std::tuple<double,double,double>> HybridAStar::plan(
   while (!open_list.empty()) {
     iteration++;
 
-    // İlk 5 iterasyonu debug et
-    if (iteration <= 5) {
-      std::cout << "Iterasyon " << iteration
-                << " open_list boyutu: " << open_list.size() << std::endl;
-    }
-
     HNode current = open_list.top();
     open_list.pop();
 
@@ -150,7 +147,9 @@ std::vector<std::tuple<double,double,double>> HybridAStar::plan(
 
     double dist = heuristic(current.x, current.y, gx, gy);
     if (dist < goal_thresh) {
-      std::cout << "Hedefe ulasildi! Iterasyon: " << iteration << std::endl;
+      RCLCPP_INFO(rclcpp::get_logger("hybrid_astar"),
+        "Hedefe ulasildi! Iterasyon: %d", iteration);
+
       std::vector<std::tuple<double,double,double>> path;
       HNode n = current;
       while (n.valid_parent) {
@@ -161,17 +160,33 @@ std::vector<std::tuple<double,double,double>> HybridAStar::plan(
       }
       path.push_back({sx, sy, st});
       std::reverse(path.begin(), path.end());
-      return path;
+      return smoothPath(path, grid);
     }
 
     for (double steer : steers) {
-      HNode next = motion(current, steer, params_.step_size);
+      // Engele yakınlığa göre dinamik adım boyutu
+         double dynamic_step = params_.step_size;
+         int cx = static_cast<int>((current.x - origin_x_) / resolution_);
+         int cy = static_cast<int>((current.y - origin_y_) / resolution_);
+         int check_dist = 3; // 3 hücre yarıçapında engel var mı
+         bool near_obstacle = false;
+       for (int ddx = -check_dist; ddx <= check_dist && !near_obstacle; ddx++) {
+        for (int ddy = -check_dist; ddy <= check_dist && !near_obstacle; ddy++) {
+          int ngx = cx + ddx;
+          int ngy = cy + ddy;
+          if (ngx < 0 || ngx >= width_ || ngy < 0 || ngy >= height_) continue;
+          int idx = ngy * width_ + ngx;
+          if (grid[idx] >= 50 || grid[idx] < 0) near_obstacle = true;
+        }
+       }
+      if (near_obstacle) dynamic_step = params_.step_size * 0.5;
+      HNode next = motion(current, steer, dynamic_step);
       if (!isValid(next.x, next.y, grid)) continue;
       std::string next_key = toKey(next.x, next.y, next.theta);
       if (closed_list.count(next_key) && closed_list[next_key]) continue;
       double new_g = current.g + params_.step_size;
       next.g = new_g;
-      next.h = heuristic(next.x, next.y, gx, gy);
+      next.h = 1.3 * heuristic(next.x, next.y, gx, gy);
       next.f = next.g + next.h;
       if (all_nodes.find(next_key) == all_nodes.end() ||
           new_g < all_nodes[next_key].g)
@@ -182,6 +197,51 @@ std::vector<std::tuple<double,double,double>> HybridAStar::plan(
     }
   }
 
-  std::cout << "Rota bulunamadi. Toplam iterasyon: " << iteration << std::endl;
+  RCLCPP_WARN(rclcpp::get_logger("hybrid_astar"),
+    "Rota bulunamadi. Toplam iterasyon: %d", iteration);
   return {};
+}
+
+std::vector<std::tuple<double,double,double>> HybridAStar::smoothPath(
+  const std::vector<std::tuple<double,double,double>> & path,
+  const std::vector<int8_t> & grid)
+{
+  if (path.size() < 3) return path;
+
+  std::vector<std::tuple<double,double,double>> smoothed;
+  smoothed.push_back(path[0]);
+
+  size_t current = 0;
+
+  while (current < path.size() - 1) {
+    size_t farthest = current + 1;
+
+    for (size_t next = current + 2; next < path.size() && next <= current + 3; next++) {
+      double x0 = std::get<0>(path[current]);
+      double y0 = std::get<1>(path[current]);
+      double x1 = std::get<0>(path[next]);
+      double y1 = std::get<1>(path[next]);
+
+      // İki nokta arasında engel var mı kontrol et
+      bool clear = true;
+      int steps = static_cast<int>(std::sqrt(std::pow(x1-x0,2) + std::pow(y1-y0,2)) / resolution_) + 1;
+
+      for (int s = 1; s < steps; s++) {
+        double t = static_cast<double>(s) / steps;
+        double cx = x0 + t * (x1 - x0);
+        double cy = y0 + t * (y1 - y0);
+        if (!isValid(cx, cy, grid)) {
+          clear = false;
+          break;
+        }
+      }
+
+      if (clear) farthest = next;
+    }
+
+    smoothed.push_back(path[farthest]);
+    current = farthest;
+  }
+
+  return smoothed;
 }

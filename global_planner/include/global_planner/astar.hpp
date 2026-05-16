@@ -45,6 +45,10 @@ private:
 
   // 2D koordinatı 1D index'e çevir
   int toIndex(int x, int y);
+  
+   std::vector<std::pair<int,int>> smoothPath(
+    const std::vector<std::pair<int,int>> & path,
+    const std::vector<int8_t> & grid);
 };
 
 #endif

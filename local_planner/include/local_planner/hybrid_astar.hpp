@@ -72,6 +72,10 @@ private:
   HNode motion(const HNode & current, double steer, double step);
   
   double goal_thresh_ = 1.0;
+  
+  std::vector<std::tuple<double,double,double>> smoothPath(
+  const std::vector<std::tuple<double,double,double>> & path,
+  const std::vector<int8_t> & grid);
 };
 
 #endif
