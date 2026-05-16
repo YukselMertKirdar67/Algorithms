@@ -41,10 +41,8 @@ private:
   {
     t_ += 0.1;
 
-    // Dinamik engel x ekseni boyunca ileri geri hareket eder
-    // -6 ile +6 arasında sinüs hareketi
-    double dyn_x = 6.0 * std::sin(t_);
-
+    double dyn_x = 5.0 + 5.0 * std::sin(t_);
+    
     nav_msgs::msg::OccupancyGrid msg;
     msg.header.stamp = this->now();
     msg.header.frame_id = "map";
@@ -81,9 +79,9 @@ private:
     setRect(msg, 14, -11, 16, -9, 100);
     setRect(msg, -11, -16, -9, -14, 100);
 
-    // Dinamik engel — x ekseni boyunca hareket eder, y=3 civarında
+    
     float dx = (float)dyn_x;
-    setRect(msg, dx - 1.5, 2.0, dx + 1.5, 4.0, 100);
+    setRect(msg, dx - 0.8, 2.0, dx + 0.8, 3.5, 100);
 
     pub_->publish(msg);
   }

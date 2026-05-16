@@ -56,15 +56,10 @@ private:
     setRect(4.85, -10, 5.15, 0);
 
       // Çapraz dizilim — araç zig-zag yapmak zorunda
-    // Sol tarafı kapatıyor
-    setRect(-8, -14, 4, -10);    // engel 1 — sol
-
-    // Sağ tarafı kapatıyor
-    setRect(-4, -4, 8, 0);       // engel 2 — sağ
-
-    // Sol tarafı kapatıyor
-    setRect(-8, 8, 4, 12);       // engel 3 — sol
-
+    // Statik engeller — çapraz dizilim
+   setRect(-8, -14, 4, -10);    // engel 1 — sol alt
+   setRect(-4, -4, 8, 0);       // engel 2 — orta
+   setRect(4, 8, 8, 12);        // engel 3 — sağ üst
     // Kenar engeller
     setRect(-16, 9, -14, 11);    // engel 4
     setRect(14, -11, 16, -9);    // engel 5
